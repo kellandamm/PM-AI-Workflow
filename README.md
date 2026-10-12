@@ -44,6 +44,7 @@ Live source connections need your organization's authorization.
 
 - [Step-by-step user guide](docs/copilot-workflow.md)
 - [Administrator guide for shared automation](docs/copilot-automation.md)
+- [Plan and checklist for event-driven intake](docs/event-driven-plan.md)
 - [Technical reference](docs/copilot-reference.md)
 
 Rehearse the sample with your account before a live demonstration. A complete

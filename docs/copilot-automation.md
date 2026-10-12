@@ -81,20 +81,40 @@ but has not been executed against configured hosted environments.
 
 ## What is still needed for event-driven customer use
 
-GitHub Actions is the first-party execution host; skills are not webhook listeners.
-For live event-triggered intake, separately implement/verify an authenticated source
-system to GitHub event path, source-service noninteractive authorization, idempotent event
-acceptance, approver identity/role checks and durable state beyond artifact retention.
-Use read-only source tools, version/hash-bound approval artifacts, redaction, usage
-limits and an operations/recovery runbook. Do not treat arbitrary issue comments
-or labels as authenticated approvals.
+The [event-driven implementation plan](event-driven-plan.md) now defines the
+work needed, owners, administrator setup and acceptance tests. It is a plan,
+not an enabled integration. The current workflow remains synthetic-only.
 
-External publishing requires a separate explicit authorization and tested
-idempotency/ambiguous-write recovery. Final story approval does not itself
-authorize issue creation in any tracker. No live connector or publisher is enabled here.
+For the first live pilot, choose **one source system and one ready-for-refinement
+event**. An authenticated intake service accepts the event, collects authorized
+source snapshots and starts a saved request. GitHub Actions runs the agent work
+between the same three human reviews. Skills guide the PM; they do not listen
+for webhooks.
 
-For a broader hosted agent implementation evaluate GitHub Agentic Workflows,
-which GitHub recommends for automation rather than handwritten CLI jobs:
+| Prepare | Owner | Ready when |
+| --- | --- | --- |
+| Source and request rule | Product owner | Source project, trigger, required documents and allowed data are agreed. |
+| Webhook receiver and dispatch | Integration engineer | Invalid events are rejected; duplicate/replayed events cannot create duplicate work. |
+| Read-only source access | Source administrator | A supported unattended identity can read only the agreed sources. |
+| Durable saved state | Platform engineer | Requests survive runner loss and artifact expiry; concurrent/stale updates are rejected. |
+| Three approval reviews | Repository administrator and PM lead | Authorized reviewers inspect the exact saved revision; actor, decision and hashes are recorded. |
+| Limits and recovery | Operations owner | Usage caps, alerts, pause/retry and backup restoration are tested. |
+
+Before configuring services, complete the plan's
+[administrator checklist](event-driven-plan.md#administrator-checklist).
+Then build and test the components in its
+[implementation order](event-driven-plan.md#implementation-order).
+Do not enable real events until the
+[launch criteria](event-driven-plan.md#launch-criteria) pass.
+
+External publishing is a separate optional phase. Final story approval permits
+handoff, not issue creation. A publisher requires separate authorization, exact
+payload review and duplicate/ambiguous-write recovery. No live connector or
+publisher is enabled here.
+
+GitHub recommends evaluating Agentic Workflows for most automation use cases.
+The plan includes that evaluation without assuming it replaces the existing
+checkpoint or approval protections:
 
 - [CLI with Actions](https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions)
 - [Programmatic CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/run-cli-programmatically)
