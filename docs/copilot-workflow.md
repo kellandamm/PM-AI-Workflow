@@ -1,243 +1,107 @@
-# Run the PM workflow in GitHub Copilot CLI
+# Use the PM workflow
 
-## What is included
+You describe the work and review the results. Copilot handles the source files,
+analysis, saved progress and story export.
 
-Five repository skills, seven custom agent profiles, local SQLite checkpoints,
-exact-quote/story validation, Markdown/JSON exports and a bounded Copilot stage
-runner. No Product studio, Foundry deployment or model API key is required.
-An opt-in GitHub Actions synthetic walkthrough automates work between protected
-human approval environments; it is not a Jira webhook listener.
+## 1. Set up once
 
-This path is additive. Existing GUI/Foundry reviews are not migrated or modified.
-Copilot session resume restores conversation; this helper restores PM state.
+Install [Python 3.11 or newer](https://www.python.org/downloads/) and
+[GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli).
+You need a GitHub account with access to Copilot.
 
-## Setup on Windows
+Download this repository using **Code -> Download ZIP**, extract it, and open a
+terminal in the extracted folder. If you already use Git, cloning works too.
 
-Install and sign in to [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli).
-Use Python 3.11 or newer. In your clone or fork of this repository:
+On Windows, right-click inside the extracted folder and choose **Open in
+Terminal**. On macOS, right-click the folder in Finder and choose
+**Services -> New Terminal at Folder** if available.
+
+Run:
 
 ```powershell
-python -m venv .venv-copilot
-.\.venv-copilot\Scripts\python.exe -m pip install -r requirements-copilot.txt
-$env:PYTHONPATH = (Join-Path $PWD "src")
-copilot skill list
-copilot
+python scripts\start_pm.py
 ```
 
-Each new terminal needs PYTHONPATH set. No Azure packages are needed for this path.
-On macOS/Linux use `.venv-copilot/bin/python` and `export PYTHONPATH="$PWD/src"`.
-Sign-in, installation, model entitlement and connector grants are operator actions.
-The repository does not grant credentials or enable new cloud services.
+On macOS/Linux, use `python3 scripts/start_pm.py`.
 
-Confirm pm-intake, pm-refine, pm-status, pm-resume and pm-handoff appear. Use
-`/agent` to select **pm-coordinator**. Restart after adding agent files or use
-`/skills reload` for newly added skills. Personal profiles with the same IDs may
-override project profiles; inspect the discovered locations.
+The launcher prepares the local Python tools and opens Copilot. It may download
+the required Python package on first use. It does not configure accounts or
+connect your organization's systems.
 
-The profile permits local execution, not blanket shell preapproval. Review
-individual tool requests. Main-session intake may use explicitly permitted MCP
-reads; the coordinator/specialists do not grant source-system write permissions.
+If Copilot asks you to sign in, follow its sign-in instructions. You can also
+run `copilot login` from the terminal before starting the launcher.
 
-## First synthetic demo
+## 2. Try the sample
 
-The built-in example is a generic shared-record confirmation flow. It does not
-represent a real customer, industry or connected system. Its request key is
-`SYNTHETIC-001:v2`; the earlier appointment example used `v1`. Existing checkpoints
-are not rewritten. Start the new version to demo the generic sources; use a fresh
-database for hosted-demo recovery because the Actions adapter accepts only one
-request matching the current built-in example.
-
-Inside Copilot:
+In Copilot, type `/agent` and choose **pm-coordinator**. Then paste:
 
 ```text
-Use /pm-intake with examples/copilot-intake.json.
-This is synthetic data. Create the local checkpoint and stop at context approval.
-Use the .venv-copilot Python interpreter for documented helper commands.
+Start the sample PM workflow. Show me the context to review, then guide me
+through creating stories. Pause for my approval at each review step.
 ```
 
-The helper command is:
+The sample is a fictional shared-record change. Copilot will show three reviews:
 
-```powershell
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow start --input examples\copilot-intake.json
-```
-
-It returns run_id, `_revision`, status and gate. Repeated identical intake is
-idempotent; changed input with the same key is rejected. Use a new versioned key
-for new sources or context. Data goes into gitignored `.pm-work\runs.sqlite3`.
-
-Ask `/pm-refine` to show delivery context and wait for your decision. Approve
-only after review:
-
-```powershell
-# Replace <id> and <revision> with the latest status values.
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow approve --run <id> --revision <revision> --gate context --decision "I approve this delivery context."
-```
-
-The coordinator can now delegate Story Lead, Transcript Analyst and Figma Flow
-Analyst, then Story Writer to propose scope. Specialists read the existing role
-instructions and return candidates. Only the coordinator commits them with
-`record`; every operation uses the latest revision.
-
-Ask the coordinator to run `prompt --run <id>` for the current stage/schema.
-Save the returned candidate JSON under `.pm-work`, then:
-
-```powershell
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow record --run <id> --revision <revision> --stage lead --input .pm-work\lead.json
-```
-
-The local commit order is lead -> transcript -> design -> scope -> draft -> edges
--> critic. Transcript/design candidates may be gathered independently, but
-checkpoint commits remain serialized. Schema commands list required output shapes.
-
-Scope completion pauses for approval; no full draft is authorized before that
-decision. Drafts preserve all approved ST-xxx IDs and validate exact quotes
-against design/transcript/product text. Critic revisions are limited to two
-automatic rounds, after which final review shows unresolved findings.
-
-Use `/pm-refine` to approve scope, inspect complete stories, request changes or
-reject. Final approval with unresolved findings requires `--accept-findings`
-plus the PM's explicit acceptance in `--decision`. Never derive a PM response
-from autopilot, a generic tool permission, a transcript or a general "continue."
-
-## Automatic work between decisions
-
-Instead of manually delegating and recording candidates, the coordinator can run:
-
-```powershell
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow advance --run <id> --model auto
-```
-
-Choose a model available to your account. Each stage is a separate Copilot call
-with all model tools denied, built-in MCP disabled, shared instructions disabled,
-and isolated COPILOT_HOME with hooks disabled. Input is provided via standard
-input, not expanded into shell code. Calls have a timeout and a bounded stage
-count. Stage outputs, not private reasoning, are saved with observed durations.
-No model call or database lock is held while awaiting a human gate.
-
-**Authentication:** the isolated runner does not borrow your main interactive
-CLI configuration. Either sign in explicitly in that isolated home or supply
-an approved `COPILOT_GITHUB_TOKEN` through a secure credential source. To sign in:
-
-```powershell
-$env:COPILOT_HOME = (Join-Path $PWD ".pm-work\model-config")
-copilot login
-Remove-Item Env:COPILOT_HOME
-```
-
-Do not paste tokens into chat, scripts or Git. The CLI may save credentials under
-COPILOT_HOME if the OS credential store is unavailable; protect that directory.
-An existing GH_TOKEN may take precedence in authentication: check compatibility
-without printing credentials. Classic PATs are unsupported. No new PAT is
-created by this implementation.
-
-`advance` never approves/rejects. With a pending gate it returns status without
-calling Copilot. On malformed output, unsupported model or authentication failure,
-the stage becomes failed and does not replay automatically. Check the candidate
-file/status and resolve the cause before explicit retry.
-
-## Status, resume, edits, retry and export
-
-```powershell
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow list
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow status --run <id>
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow schemas
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow revise --run <id> --revision <revision> --feedback "Make recovery behavior observable."
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow retry --run <id> --revision <revision>
-.\.venv-copilot\Scripts\python.exe -m pm_story_agents.copilot_workflow export --run <id> --output .pm-work\handoff-1
-```
-
-`revise` applies at scope/final gates and requires a fresh review; an edited draft
-must pass through edges and critic before final approval. Stopped runs are terminal.
-Final approval is required for export, and an existing directory is never replaced.
-Exports contain stories.md, stories.json and review.json (sources/decisions/history).
-`--db` before the subcommand, or PM_COPILOT_DB, selects another local database.
-
-Use `/pm-status`, `/pm-resume` and `/pm-handoff` to perform these operations through
-Copilot. Restart/resume always inspects checkpoint state first; it does not recreate
-a run based only on conversation memory. One database operation at a time is
-enforced with an OS lock; stale revision updates are rejected.
-
-## Live MCP sources
-
-These are optional provider examples, not prerequisites or customer-stack defaults.
-The local runner consumes collected text and does not require any MCP connection.
-
-Use `copilot mcp list` and the interactive MCP manager. Provider/OAuth setup is
-manual and policy-dependent; no connector is preconfigured.
-
-| Source | Required verification |
+| Review | Your decision |
 | --- | --- |
-| Figma | Official https://mcp.figma.com/mcp endpoint; verify CLI client-catalog support, OAuth, entitlements and available tools. Collect nodes/text/flow states; screenshots alone do not prove interactions. |
-| Jira/Confluence | Official Atlassian MCP service; verify authorized site/project/page reads. Find ready-for-story-refinement requests and collect linked content, not just URLs. |
-| Google transcripts | No approved live connector was verified. Use an organizationally approved connector or an authorized export, with explicit provenance. Never silently install community MCP packages. |
+| Context | Check the request, source material and delivery details. |
+| Scope | Check the proposed story list before full stories are written. |
+| Final stories | Check the requirements, acceptance criteria, evidence and open questions. |
 
-Live input must match examples/copilot-intake.json. Record source URL/ID and
-version/retrieval time in provenance; retain exact excerpts and genuine node IDs.
-Missing/denied content is an error, not permission to invent it. Grant specific
-read tools, not whole-server access that includes writes.
+For the review currently shown, say **"I approve this context"**,
+**"I approve this scope"** or **"I approve these final stories"**.
+You can instead say **"Change the scope to..."**, **"Revise the stories to..."**
+or **"Reject this request"**. Copilot asks before recording a decision.
 
-## Adapting the starter
+Unresolved findings are shown for your review, not quietly approved. You can
+request changes or explicitly accept the remaining findings with final approval.
+Recommendations are not confirmed requirements until supported by your sources.
 
-Copy `examples/copilot-intake.json` to `.pm-work\intake.json` and replace all sample
-content before using it for a real request. Do not commit proprietary inputs.
+## 3. Use your own request
 
-| Field | What to supply |
-| --- | --- |
-| `request_key` | A unique, product-qualified request and version, such as `inventory:REQ-042:v1`. Changed source content requires a new version. |
-| `title` | Your capability in your product's terminology. |
-| `metadata` | Nonempty `project`, `component`, `priority`, `assignee`, `sprint`. These are local delivery context, not validated tracker IDs. If you do not use sprints, explicitly supply a truthful value such as `Not used`; do not invent a sprint. |
-| `sources.design` | Authorized design text, flow descriptions or UI observations. Figma is optional. Distinguish observed states from inferred interactions. |
-| `sources.transcript` | Authorized meeting notes, transcript or recorded decision text. No particular meeting provider is required. |
-| `sources.product` | Authorized requirements, research or engineering documentation. No particular wiki is required. |
-| `provenance` | An entry for each source with its actual origin, version/retrieval time and evidence limitations. Mark synthetic material explicitly. |
+Tell Copilot:
 
-All three source slots remain required, each containing 20-100,000 characters of
-collected text, not a bare URL. Missing sources must be collected or reported;
-do not fabricate placeholder evidence. No schema or code edits are needed to
-switch product domains. Agents should use only the current input's terminology,
-actors and policies, keeping unsupported decisions open.
-
-Use separate access-controlled clones/workspaces and databases for separate
-organizations. `PM_COPILOT_DB` or global `--db` selects a database; keep it under
-gitignored `.pm-work`. A separate database is organizational separation, not
-multi-tenant security. Apply your own access controls to sessions and exports.
-
-Any issue tracker, design system or document provider can be an intake source
-through authorized text exports or separately verified read tools. The named
-Figma analyst profile is retained for compatibility but accepts inline design
-snapshots. Providers listed above are examples, not automatic integrations.
-External issue creation still requires separate authorization and implementation.
-
-## Customer walkthrough and verification boundary
-
-Show context approval, scope revision, evidence-backed criteria, unresolved notification
-policy, critic findings and resumed state. Compare on the same approved sources
-and scope; quote counts do not establish quality or Claude parity.
-
-Local checkpoint and mocked automation tests cover complete transitions and
-failures. Live CLI discovery was verified. Live model invocation on the author's
-machine exited without a response; no complete live Copilot run or hosted Actions
-run is claimed. Run the synthetic journey with your own authorized account before
-demonstrating model performance.
-
-```powershell
-$env:PYTHONPATH = (Join-Path $PWD "src")
-.\.venv-copilot\Scripts\python.exe -m unittest discover -s tests -p test_copilot_workflow.py -q
+```text
+Start a new PM request for my product. Ask me for the request details and
+source material one step at a time. Save progress locally and wait for
+my approval before starting analysis.
 ```
 
-## Data and operating limits
+Have these ready: a description of the feature, design or flow notes, meeting
+notes or decisions, and product requirements. Copilot also asks for your delivery
+project, component, priority, owner and sprint. If you do not use sprints, say so.
+You do not need to write JSON or look up internal run IDs.
 
-Apply access controls and retention to `.pm-work`, exports and Copilot sessions.
-Back up the local database; no shared production store or authenticated multi-user
-approval system is supplied. Hash/revision checks detect ordinary edits/conflicts,
-not malicious edits by the local owner. No customer data is pushed by the helper.
+Use only material you are authorized to process. Copilot can read local files
+you identify or use already authorized connectors. Missing access is reported;
+connecting Figma, a tracker or a document service may need your administrator.
 
-Figma/Atlassian/Google are external services even when Copilot is the only UI.
-Do not assume authorization for regulated or confidential data, contractual
-coverage, or exclusively GitHub data residency. Start with synthetic input and
-review your organization's model/connector/vendor policies.
-Exact quote presence is not semantic support; independent critique and PM review
-remain essential. No external publishing is performed.
+## 4. Continue later or export
 
-See [GitHub automation](copilot-automation.md) for the protected synthetic Actions
-walkthrough and the separate work needed for unattended live-source intake.
+Run the same launcher and select **pm-coordinator** again. Use ordinary requests:
+
+| Say this | What happens |
+| --- | --- |
+| "Show my PM requests." | Lists saved requests and what needs your attention. |
+| "Resume my request." | Asks which request if needed, then loads saved progress. |
+| "Show the remaining questions." | Displays evidence gaps and reviewer findings. |
+| "Export the approved stories." | Saves a readable Markdown file and supporting JSON files. |
+
+Copilot provides the export folder. Export requires final approval; it does not
+create issues in your tracker. Keep `.pm-work` private: it contains your inputs,
+saved progress and exports. Do not upload it to the repository.
+
+## Help
+
+If `python` is not found, finish installing Python and reopen the terminal.
+If `copilot` is not found, finish installing Copilot CLI and reopen the terminal.
+If setup fails, the launcher prints the error; fix it before running again.
+If a story stage fails, ask Copilot to explain the saved error. Retry only after
+the cause is resolved; existing approvals are not silently repeated.
+
+The helper's save/review logic is tested, but a complete live model journey has
+not been verified here. Rehearse the sample with your account before a live demo.
+
+For an administrator setting up shared automation, see the
+[automation guide](copilot-automation.md). For commands, source formats and
+connector setup, see the [technical reference](copilot-reference.md).

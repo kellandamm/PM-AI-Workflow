@@ -31,7 +31,7 @@ class CopilotState:
     def load(self, run_id: str) -> dict:
         state = self.store.load(run_id)
         if state is None:
-            raise ValueError("CLI run not found. Foundry review IDs cannot be resumed here.")
+            raise ValueError("Saved request not found. List your PM requests and select an existing one.")
         if digest(state["input"]) != state["source_hash"]:
             raise ValueError("Sources changed. Start a new versioned run and reapprove context.")
         if set(state["artifacts"]) != set(state["artifact_hashes"]):

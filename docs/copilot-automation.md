@@ -1,5 +1,17 @@
 # GitHub-hosted Copilot PM automation
 
+## Who should use this guide
+
+This setup is for a repository administrator who wants shared, GitHub-hosted
+approvals. For individual use, follow the [user guide](copilot-workflow.md);
+you do not need to set up this workflow.
+
+Ask your administrator to configure the approval reviewers, approved Copilot
+credential and pinned CLI version below. Once configured, your everyday steps
+are: open **Actions**, start **Copilot PM synthetic walkthrough**, review each
+checkpoint when approval is requested, and download the final story files.
+This example uses only fictional data; it does not collect live requests.
+
 ## Included opt-in workflow
 
 `.github/workflows/copilot-pm-demo.yml` is a manually started **synthetic**
@@ -57,7 +69,8 @@ each advance stops at the next gate and limits automatic critic revisions to two
 Failures preserve checkpoints/candidates using always-upload. No failed job
 auto-replays PM decisions. Download the latest checkpoint into an access-controlled
 local workspace, inspect status, explicitly retry or request changes, and continue
-with Copilot CLI. Do not blindly rerun a partly completed workflow or replace its
+with Copilot CLI using the [technical reference](copilot-reference.md).
+Do not blindly rerun a partly completed workflow or replace its
 database with an older artifact.
 
 If required-reviewer configuration is unavailable, the workflow cannot run

@@ -1,64 +1,50 @@
 # PM-AI-Workflow
 
-Build evidence-backed product stories directly in **GitHub Copilot CLI**, without
-a separate app or Foundry deployment. Five skills and seven agents coordinate
-source intake, design/meeting analysis, scope, drafting, edge cases and critique.
-Local checkpoint helpers preserve explicit **context, scope and final-story**
-decisions, validate complete story sets and source quotes, and export the handoff.
+Turn design notes, meeting decisions and product requirements into evidence-backed
+user stories with **GitHub Copilot**. You review the context, proposed scope and
+final stories. Copilot handles analysis, drafting and saving progress.
 
-The starter is **customer- and industry-agnostic**. Its synthetic example covers
-confirming a shared record change, not a specific customer's product. Your input
-supplies the product terminology, actors, policies and delivery context; agents
-must not borrow requirements from the example. No particular issue tracker or
-design provider is required for the local workflow.
+The starter works with your product's terminology and sources. The included
+sample is fictional and covers confirming a shared-record change.
 
-## Quick start
+## Get started
 
-Install/sign in to Copilot CLI and install Python 3.11+. In this repository:
+1. Install [Python 3.11 or newer](https://www.python.org/downloads/) and
+   [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli).
+   You need an account with Copilot access.
+2. Choose **Code -> Download ZIP** on this repository, extract it, and open a
+   terminal in the extracted folder.
+3. Run the launcher:
 
 ```powershell
-python -m venv .venv-copilot
-.\.venv-copilot\Scripts\python.exe -m pip install -r requirements-copilot.txt
-$env:PYTHONPATH = (Join-Path $PWD "src")
-copilot skill list
-copilot
+python scripts\start_pm.py
 ```
 
-Select **pm-coordinator** with `/agent`. Ask:
+On macOS/Linux, use `python3 scripts/start_pm.py`. First use prepares the Python
+tools. Sign in to Copilot if prompted.
+
+In Copilot, type `/agent`, select **pm-coordinator**, and say:
 
 ```text
-Use /pm-intake with examples/copilot-intake.json.
-Create a synthetic run and stop at context approval.
-Use /pm-refine to guide me through context, scope and final-story decisions.
-Use the .venv-copilot Python interpreter for helper commands.
+Start the sample PM workflow. Guide me through it and pause for my approval
+at each review step.
 ```
 
-Use `/pm-status`, `/pm-resume` and `/pm-handoff` as needed.
-The helper's `advance` automates model work between decisions, never approves.
-No Azure dependencies are required. Authorize the isolated runner's Copilot account
-as explained in the guide; do not put tokens in chat or source.
+## Everyday use
 
-## Use with your own product
+Say **"Start a new PM request"**, **"Show my PM requests"**, **"Resume my request"**
+or **"Export the approved stories"**. Copilot guides you through the required
+details; you do not need to type helper commands or write JSON.
 
-Copy the synthetic input into gitignored `.pm-work`, replace its title, delivery
-metadata, three source snapshots and provenance, and give it a unique versioned
-request key. Use approved exports or your organization's authorized read
-connectors. See [Adapting the starter](docs/copilot-workflow.md#adapting-the-starter)
-for the input contract, workspace isolation and optional integrations.
+Review before approving. Your files and progress stay in the local `.pm-work`
+folder; keep it private. Exports do not automatically create tracker issues.
+Live source connections need your organization's authorization.
 
-## Directions and automation
+## Guides
 
-- [Setup, command reference, MCP integration and customer demo](docs/copilot-workflow.md)
-- [Opt-in GitHub Actions walkthrough and approval setup](docs/copilot-automation.md)
-- [Synthetic input](examples/copilot-intake.json)
-- [Checkpoint tests](tests/test_copilot_workflow.py)
+- [Step-by-step user guide](docs/copilot-workflow.md)
+- [Administrator guide for shared automation](docs/copilot-automation.md)
+- [Technical reference](docs/copilot-reference.md)
 
-The Actions example uses synthetic data and requires three protected approval
-environments, an explicitly reviewed CLI version and authorized Copilot credential.
-It is not automatically enabled on clone and is not a live Jira webhook integration.
-
-Figma/Jira/Confluence/Google connections require provider authorization and verified
-read tools; none are preconfigured. Keep customer work under gitignored `.pm-work`.
-Local owner access is not tamper-proof multi-user governance. No Jira publishing
-or quality/cost uplift is claimed. Live model and hosted Actions verification remain
-dependent on operator authentication/configuration; read the guide's status.
+Rehearse the sample with your account before a live demonstration. A complete
+live model journey and configured hosted walkthrough have not been verified here.

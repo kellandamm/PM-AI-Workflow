@@ -1,1 +1,1 @@
-"""PM story generation agents for Microsoft Foundry."""
+"""Evidence-backed product-management story workflows."""

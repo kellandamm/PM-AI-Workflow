@@ -7,8 +7,10 @@ on:
       - "src/pm_story_agents/documents.py"
       - "src/pm_story_agents/run_store.py"
       - "scripts/copilot_actions_stage.py"
+      - "scripts/start_pm.py"
       - "examples/copilot-intake.json"
       - "tests/test_copilot_workflow.py"
+      - "tests/test_pm_launcher.py"
       - "requirements-copilot.txt"
       - ".github/workflows/copilot-pm-checks.yml"
   pull_request:
@@ -34,4 +36,4 @@ jobs:
       - name: Test durable approval and automation logic without model calls
         env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -p test_copilot_workflow.py -q
+        run: python -m unittest discover -s tests -q
