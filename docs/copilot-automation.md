@@ -41,7 +41,9 @@ automatically accepting findings.
 
 No source-system secrets are needed: this workflow only accepts the built-in
 synthetic input. The adapter validates that the stored request exactly matches
-the repository example. Real transcripts must not be put into this demo.
+the repository example (`SYNTHETIC-001:v2`, a generic shared-record change).
+Real transcripts must not be put into this demo. Older `v1` checkpoints remain
+resumable locally but are not accepted by this version of the hosted demo.
 
 ## State, recovery and limits
 
@@ -67,8 +69,8 @@ but has not been executed against configured hosted environments.
 ## What is still needed for event-driven customer use
 
 GitHub Actions is the first-party execution host; skills are not webhook listeners.
-For live Jira-triggered intake, separately implement/verify an authenticated Jira
-to GitHub event path, source-service noninteractive authorization, idempotent event
+For live event-triggered intake, separately implement/verify an authenticated source
+system to GitHub event path, source-service noninteractive authorization, idempotent event
 acceptance, approver identity/role checks and durable state beyond artifact retention.
 Use read-only source tools, version/hash-bound approval artifacts, redaction, usage
 limits and an operations/recovery runbook. Do not treat arbitrary issue comments
@@ -76,7 +78,7 @@ or labels as authenticated approvals.
 
 External publishing requires a separate explicit authorization and tested
 idempotency/ambiguous-write recovery. Final story approval does not itself
-authorize Jira creation. No live connector or publisher is enabled here.
+authorize issue creation in any tracker. No live connector or publisher is enabled here.
 
 For a broader hosted agent implementation evaluate GitHub Agentic Workflows,
 which GitHub recommends for automation rather than handwritten CLI jobs:

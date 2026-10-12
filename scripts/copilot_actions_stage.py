@@ -10,7 +10,7 @@ from pm_story_agents.copilot_runner import advance, exclusive
 
 def run_stage(flow: CopilotWorkflow, gate: str, model: str, output: Path) -> dict:
     rows = flow.listing()
-    if len(rows) != 1 or rows[0]["request_key"] != "SYNTHETIC-001:v1":
+    if len(rows) != 1 or rows[0]["request_key"] != "SYNTHETIC-001:v2":
         raise ValueError("Actions example permits exactly the built-in synthetic request.")
     run_id = rows[0]["run_id"]
     state = flow.load(run_id)

@@ -6,6 +6,12 @@ source intake, design/meeting analysis, scope, drafting, edge cases and critique
 Local checkpoint helpers preserve explicit **context, scope and final-story**
 decisions, validate complete story sets and source quotes, and export the handoff.
 
+The starter is **customer- and industry-agnostic**. Its synthetic example covers
+confirming a shared record change, not a specific customer's product. Your input
+supplies the product terminology, actors, policies and delivery context; agents
+must not borrow requirements from the example. No particular issue tracker or
+design provider is required for the local workflow.
+
 ## Quick start
 
 Install/sign in to Copilot CLI and install Python 3.11+. In this repository:
@@ -31,6 +37,14 @@ Use `/pm-status`, `/pm-resume` and `/pm-handoff` as needed.
 The helper's `advance` automates model work between decisions, never approves.
 No Azure dependencies are required. Authorize the isolated runner's Copilot account
 as explained in the guide; do not put tokens in chat or source.
+
+## Use with your own product
+
+Copy the synthetic input into gitignored `.pm-work`, replace its title, delivery
+metadata, three source snapshots and provenance, and give it a unique versioned
+request key. Use approved exports or your organization's authorized read
+connectors. See [Adapting the starter](docs/copilot-workflow.md#adapting-the-starter)
+for the input contract, workspace isolation and optional integrations.
 
 ## Directions and automation
 

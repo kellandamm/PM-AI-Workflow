@@ -14,7 +14,7 @@ Copilot session resume restores conversation; this helper restores PM state.
 ## Setup on Windows
 
 Install and sign in to [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli).
-Use Python 3.11 or newer. In a clone of `kellandamm/PM-AI-Workflow`:
+Use Python 3.11 or newer. In your clone or fork of this repository:
 
 ```powershell
 python -m venv .venv-copilot
@@ -39,6 +39,13 @@ individual tool requests. Main-session intake may use explicitly permitted MCP
 reads; the coordinator/specialists do not grant source-system write permissions.
 
 ## First synthetic demo
+
+The built-in example is a generic shared-record confirmation flow. It does not
+represent a real customer, industry or connected system. Its request key is
+`SYNTHETIC-001:v2`; the earlier appointment example used `v1`. Existing checkpoints
+are not rewritten. Start the new version to demo the generic sources; use a fresh
+database for hosted-demo recovery because the Actions adapter accepts only one
+request matching the current built-in example.
 
 Inside Copilot:
 
@@ -152,6 +159,9 @@ enforced with an OS lock; stale revision updates are rejected.
 
 ## Live MCP sources
 
+These are optional provider examples, not prerequisites or customer-stack defaults.
+The local runner consumes collected text and does not require any MCP connection.
+
 Use `copilot mcp list` and the interactive MCP manager. Provider/OAuth setup is
 manual and policy-dependent; no connector is preconfigured.
 
@@ -166,9 +176,41 @@ version/retrieval time in provenance; retain exact excerpts and genuine node IDs
 Missing/denied content is an error, not permission to invent it. Grant specific
 read tools, not whole-server access that includes writes.
 
+## Adapting the starter
+
+Copy `examples/copilot-intake.json` to `.pm-work\intake.json` and replace all sample
+content before using it for a real request. Do not commit proprietary inputs.
+
+| Field | What to supply |
+| --- | --- |
+| `request_key` | A unique, product-qualified request and version, such as `inventory:REQ-042:v1`. Changed source content requires a new version. |
+| `title` | Your capability in your product's terminology. |
+| `metadata` | Nonempty `project`, `component`, `priority`, `assignee`, `sprint`. These are local delivery context, not validated tracker IDs. If you do not use sprints, explicitly supply a truthful value such as `Not used`; do not invent a sprint. |
+| `sources.design` | Authorized design text, flow descriptions or UI observations. Figma is optional. Distinguish observed states from inferred interactions. |
+| `sources.transcript` | Authorized meeting notes, transcript or recorded decision text. No particular meeting provider is required. |
+| `sources.product` | Authorized requirements, research or engineering documentation. No particular wiki is required. |
+| `provenance` | An entry for each source with its actual origin, version/retrieval time and evidence limitations. Mark synthetic material explicitly. |
+
+All three source slots remain required, each containing 20-100,000 characters of
+collected text, not a bare URL. Missing sources must be collected or reported;
+do not fabricate placeholder evidence. No schema or code edits are needed to
+switch product domains. Agents should use only the current input's terminology,
+actors and policies, keeping unsupported decisions open.
+
+Use separate access-controlled clones/workspaces and databases for separate
+organizations. `PM_COPILOT_DB` or global `--db` selects a database; keep it under
+gitignored `.pm-work`. A separate database is organizational separation, not
+multi-tenant security. Apply your own access controls to sessions and exports.
+
+Any issue tracker, design system or document provider can be an intake source
+through authorized text exports or separately verified read tools. The named
+Figma analyst profile is retained for compatibility but accepts inline design
+snapshots. Providers listed above are examples, not automatic integrations.
+External issue creation still requires separate authorization and implementation.
+
 ## Customer walkthrough and verification boundary
 
-Show context approval, scope revision, evidence-backed criteria, unresolved email
+Show context approval, scope revision, evidence-backed criteria, unresolved notification
 policy, critic findings and resumed state. Compare on the same approved sources
 and scope; quote counts do not establish quality or Claude parity.
 
@@ -191,8 +233,9 @@ approval system is supplied. Hash/revision checks detect ordinary edits/conflict
 not malicious edits by the local owner. No customer data is pushed by the helper.
 
 Figma/Atlassian/Google are external services even when Copilot is the only UI.
-Do not assume healthcare-data authorization, a BAA, or exclusively GitHub data
-residency. Start with synthetic input and review model/connector/vendor policies.
+Do not assume authorization for regulated or confidential data, contractual
+coverage, or exclusively GitHub data residency. Start with synthetic input and
+review your organization's model/connector/vendor policies.
 Exact quote presence is not semantic support; independent critique and PM review
 remain essential. No external publishing is performed.
 

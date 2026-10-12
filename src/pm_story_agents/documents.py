@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -135,7 +134,3 @@ def markdown_export(raw: str) -> str:
         lines += [f"- {question}" for question in story.open_questions] or ["None recorded."]
         lines.append("")
     return "\n".join(lines)
-
-
-def source_screen_ids(design: str) -> list[str]:
-    return sorted(set(re.findall(r"\bAPPT-\d{3}\b", design)))

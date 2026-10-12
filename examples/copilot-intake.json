@@ -1,16 +1,16 @@
 {
-  "request_key": "SYNTHETIC-001:v1",
-  "title": "Confirm an appointment change",
+  "request_key": "SYNTHETIC-001:v2",
+  "title": "Confirm a shared record change",
   "metadata": {
     "project": "DEMO",
-    "component": "Appointments",
+    "component": "Record management",
     "priority": "Medium",
     "assignee": "Demo PM",
     "sprint": "Demo Sprint"
   },
   "sources": {
-    "design": "The confirmation screen displays the original and proposed appointment times. If saving fails, keep the entered values visible and show a retry action.",
-    "transcript": "The team agreed that confirmation is required before applying a change. The team has not decided whether changes should generate an email notification.",
+    "design": "The confirmation screen displays the original and proposed record values. If saving fails, keep the entered values visible and show a retry action.",
+    "transcript": "The team agreed that confirmation is required before applying a change. The team has not decided whether changes should generate a notification.",
     "product": "Only users with edit permission can submit changes. A successful change must show a confirmation message and the updated value."
   },
   "provenance": {

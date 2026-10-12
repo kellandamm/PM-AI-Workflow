@@ -12,16 +12,16 @@ from pm_story_agents.copilot_workflow import main
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCOPE = {"stories": [{"id": "ST-001", "title": "Confirm appointment changes",
+SCOPE = {"stories": [{"id": "ST-001", "title": "Confirm shared record changes",
                      "statement": "As an authorized user I want to confirm changes so that they are intentional."}]}
 QUOTE = "Only users with edit permission can submit changes."
 DRAFT = {"stories": [{**SCOPE["stories"][0],
     "requirements": [{"text": "Require edit permission.", "evidence": [{"source": "product", "quote": QUOTE}]}],
     "acceptance_criteria": [{"given": "A user lacks edit permission", "when": "They attempt to submit",
                              "then": "Prevent the change", "evidence": [{"source": "product", "quote": QUOTE}]}],
-    "open_questions": ["Should changes send an email?"]}]}
+    "open_questions": ["Should changes send a notification?"]}]}
 PASS = {"status": "pass", "findings": [], "revision_instructions": "No blocking findings."}
-REVISE = {"status": "revise", "findings": ["Email policy is unresolved."],
+REVISE = {"status": "revise", "findings": ["Notification policy is unresolved."],
           "revision_instructions": "Keep it as an open question."}
 ANALYSIS = {"text": "Confirmed behavior is supported by supplied evidence; unknown policy remains open."}
 
@@ -215,6 +215,61 @@ class CopilotTests(unittest.TestCase):
         self.record("edges", ANALYSIS)
         with self.assertRaises(ValueError):
             self.record("critic", {**PASS, "findings": ["Unresolved policy."]})
+
+    def test_unrelated_domains_keep_their_own_evidence_and_prompts(self):
+        for domain, actor, capability in (
+            ("Inventory", "warehouse operator", "adjust stock"),
+            ("Publishing", "editor", "update an article"),
+        ):
+            with self.subTest(domain=domain):
+                self.input["request_key"] = f"{domain}:REQ-042:v1"
+                self.input["title"] = f"Confirm {domain.lower()} changes"
+                self.input["metadata"]["component"] = domain
+                quote = f"Only an authorized {actor} can {capability}."
+                self.input["sources"]["product"] = quote
+                state = self.flow.start(self.input)
+                self.run = state["run_id"]
+                self.approve("context")
+                for stage in ("lead", "transcript", "design"):
+                    self.record(stage, ANALYSIS)
+                scope = {"stories": [{"id": "ST-001", "title": self.input["title"],
+                    "statement": f"As a {actor} I want to {capability} so that records stay accurate."}]}
+                self.record("scope", scope)
+                self.approve("scope")
+                generated_prompt = prompt(self.flow.load(self.run))
+                self.assertIn(quote, generated_prompt)
+                self.assertIn("current request's domain", generated_prompt)
+                for legacy in ("APPT-010", "Reschedule", "appointment"):
+                    self.assertNotIn(legacy, generated_prompt)
+                draft = json.loads(json.dumps(DRAFT))
+                draft["stories"][0].update(scope["stories"][0])
+                draft["stories"][0]["requirements"][0]["text"] = f"Authorize the {actor} before allowing them to {capability}."
+                draft["stories"][0]["acceptance_criteria"][0]["given"] = f"An unauthorized {actor}"
+                for field in ("requirements", "acceptance_criteria"):
+                    draft["stories"][0][field][0]["evidence"][0]["quote"] = quote
+                self.record("draft", draft)
+                self.record("edges", ANALYSIS)
+                critic_prompt = prompt(self.flow.load(self.run))
+                self.assertNotIn("APPT-010", critic_prompt)
+                self.assertNotIn("appointment", critic_prompt)
+                self.record("critic", PASS)
+                self.approve("final")
+                output = Path(self.temp.name) / domain
+                self.flow.export(self.run, output)
+                exported = json.loads((output / "stories.json").read_text())
+                self.assertEqual(exported["stories"][0]["title"], self.input["title"])
+                self.assertIn(quote, (output / "stories.md").read_text())
+
+    def test_actions_rejects_previous_sample_version(self):
+        spec = importlib.util.spec_from_file_location("actions_stage", ROOT / "scripts" / "copilot_actions_stage.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.flow = CopilotWorkflow(Path(self.temp.name) / "previous.sqlite3")
+        previous = dict(self.input, request_key="SYNTHETIC-001:v1")
+        state = self.flow.start(previous)
+        self.assertEqual(state["gate"], "context")
+        with self.assertRaisesRegex(ValueError, "built-in synthetic request"):
+            module.run_stage(self.flow, "context", "auto", Path(self.temp.name) / "export")
 
 
 if __name__ == "__main__":
