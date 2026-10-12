@@ -1,0 +1,14 @@
+.venv/
+.azure/
+__pycache__/
+.pytest_cache/
+.env
+*.sqlite3
+*.sqlite3-*
+*.py[cod]
+infra/foundry/main.json
+infra/foundry/main.parameters.json
+.azure
+node_modules/
+.pm-work/
+.venv-copilot/

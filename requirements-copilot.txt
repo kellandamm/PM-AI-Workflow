@@ -1,0 +1,2 @@
+# Only local validators are needed; install Copilot CLI separately.
+pydantic>=2.12,<3

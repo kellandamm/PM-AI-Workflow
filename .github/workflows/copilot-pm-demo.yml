@@ -1,0 +1,174 @@
+name: Copilot PM synthetic walkthrough
+run-name: Synthetic PM walkthrough by ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Copilot model available to the authenticated account
+        required: true
+        default: auto
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: copilot-pm-synthetic
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Check opt-in configuration and approval environments
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLI_VERSION: ${{ vars.PM_COPILOT_CLI_VERSION }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          [[ "$CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ ]] || {
+            echo "::error::Set PM_COPILOT_CLI_VERSION to an explicitly reviewed npm version."; exit 1;
+          }
+          for environment in pm-context pm-scope pm-final; do
+            gh api "repos/$REPO/environments/$environment" \
+              --jq '[.protection_rules[] | select(.type == "required_reviewers") | .reviewers[]] | length' \
+              | grep -Eq '^[1-9][0-9]*$' || {
+                echo "::error::$environment needs required reviewers; do not run without gate protection."; exit 1;
+              }
+          done
+      - run: python -m pip install -r requirements-copilot.txt
+      - name: Create synthetic context gate
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pm_story_agents.copilot_workflow start --input examples/copilot-intake.json
+          echo "Review the checkpoint artifact's input/context before approving pm-context." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pm-context
+          path: .pm-work/runs.sqlite3
+          include-hidden-files: true
+          retention-days: 7
+
+  context:
+    needs: prepare
+    environment: pm-context
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: pm-context
+          path: .pm-work
+      - name: Install reviewed runtime and validators
+        env:
+          CLI_VERSION: ${{ vars.PM_COPILOT_CLI_VERSION }}
+        run: |
+          npm install --global "@github/copilot@$CLI_VERSION"
+          python -m pip install -r requirements-copilot.txt
+      - name: Record environment approval and advance to scope
+        env:
+          PYTHONPATH: src
+          COPILOT_GITHUB_TOKEN: ${{ secrets.PM_COPILOT_TOKEN }}
+          PM_MODEL: ${{ inputs.model }}
+          PM_GATE: context
+        run: python scripts/copilot_actions_stage.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pm-scope
+          path: |
+            .pm-work/runs.sqlite3
+            .pm-work/candidates/
+          include-hidden-files: true
+          retention-days: 7
+
+  scope:
+    needs: context
+    environment: pm-scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: pm-scope
+          path: .pm-work
+      - name: Install reviewed runtime and validators
+        env:
+          CLI_VERSION: ${{ vars.PM_COPILOT_CLI_VERSION }}
+        run: |
+          npm install --global "@github/copilot@$CLI_VERSION"
+          python -m pip install -r requirements-copilot.txt
+      - name: Record environment approval and advance to final review
+        env:
+          PYTHONPATH: src
+          COPILOT_GITHUB_TOKEN: ${{ secrets.PM_COPILOT_TOKEN }}
+          PM_MODEL: ${{ inputs.model }}
+          PM_GATE: scope
+        run: python scripts/copilot_actions_stage.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pm-final
+          path: |
+            .pm-work/runs.sqlite3
+            .pm-work/candidates/
+          include-hidden-files: true
+          retention-days: 7
+
+  final:
+    needs: scope
+    environment: pm-final
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: pm-final
+          path: .pm-work
+      - run: python -m pip install -r requirements-copilot.txt
+      - name: Record final environment approval and export
+        env:
+          PYTHONPATH: src
+          PM_GATE: final
+        run: python scripts/copilot_actions_stage.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pm-approved-handoff
+          path: .pm-work/handoff/
+          include-hidden-files: true
+          retention-days: 7
