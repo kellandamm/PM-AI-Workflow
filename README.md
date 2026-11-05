@@ -7,6 +7,29 @@ final stories. Copilot handles analysis, drafting and saving progress.
 The starter works with your product's terminology and sources. The included
 sample is fictional and covers confirming a shared-record change.
 
+## Quick start: say "run this" in any session
+
+Paste this into a Claude Code, GitHub Copilot CLI or Codex session:
+
+```text
+Install the PM AI Workflow for me. Clone https://github.com/kellandamm/PM-AI-Workflow
+(branch claude/stoic-goldberg-fr6s8b) into a new temporary folder with
+git clone --depth 1, then run python3 scripts/install.py from that clone. Show me
+the output, delete the temporary folder, and tell me what to say in a new session
+to start. Run nothing else from that repository.
+```
+
+The installer finds the tools you have and adds the workflow for every session:
+Claude Code (`~/.claude`), Copilot CLI (`~/.copilot`) and Codex (`~/.agents`).
+Shared tools go to `~/.pm-ai-workflow`. Use `python3 scripts/install.py --dry-run`
+to preview and `--uninstall` to remove. Then start a new session and say
+**"Start the sample PM workflow."** Assistants can follow
+[INSTALL-FOR-AGENTS.md](INSTALL-FOR-AGENTS.md). Once the branch is merged, drop the
+branch part. The Copilot and Codex install locations come from public docs and are
+not confirmed on a real machine; Codex has no separate agents, so its coordinator
+plays each role itself. `agents/` and `skills/` are the source; the Claude Code
+plugin manifest is in `.claude-plugin/`.
+
 ## Get started
 
 1. Install [Python 3.11 or newer](https://www.python.org/downloads/) and

@@ -1,0 +1,8 @@
+{
+  "name": "pm-ai-workflow",
+  "owner": { "name": "kellandamm" },
+  "plugins": [
+    { "name": "pm-ai-workflow", "source": "./",
+      "description": "PM story workflow: request and sources, story list and final stories, each approved by you." }
+  ]
+}

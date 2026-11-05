@@ -1,0 +1,7 @@
+{
+  "name": "pm-ai-workflow",
+  "version": "1.0.0",
+  "description": "Turn design notes, meeting decisions and product requirements into evidence-backed user stories, with human approval at context, scope and final stories.",
+  "author": { "name": "kellandamm" },
+  "homepage": "https://github.com/kellandamm/PM-AI-Workflow"
+}
